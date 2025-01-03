@@ -1,40 +1,51 @@
-mod get_visitors;
-mod update_visitors;
-
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_dynamodb::Client;
-use lambda_http::http::Method;
+use cloud_resume_challenge_rust::get_visitors;
+use cloud_resume_challenge_rust::update_visitors;
+use cloud_resume_challenge_rust::utils::{
+    build_cors_layer, handle_favicon_request, reject_non_get_method,
+};
 use lambda_http::tower::ServiceBuilder;
 use lambda_http::{run, service_fn, tracing, Body, Error, Request, Response};
-use tower_http::cors::{Any, CorsLayer};
 
-
+const REGION: &str = "eu-west-2";
+const TABLE_NAME: &str = "cloud-resume-challenge";
 
 async fn function_handler(req: Request) -> Result<Response<Body>, Error> {
+    if req.uri().path() == "/favicon.ico" {
+        return Ok(handle_favicon_request());
+    }
+
+    // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())
-        .region(Region::new("eu-west-2"))
+        .region(Region::new(REGION))
         .load()
         .await;
 
     let client = Client::new(&config);
 
-    let table_name = "cloud-resume-challenge";
     let item_id = "blog";
 
-    if req.method() != Method::GET {
-        return Ok(Response::builder()
-        .status(405)
-        .body("Method Not Allowed".into())
-        .unwrap());
-}
-    update_visitors::update_item(&client, table_name, item_id).await?;
-    let total_visitors = get_visitors::get_item(&client, table_name, item_id).await?;
+    if let Some(res) = reject_non_get_method(&req) {
+        return Ok(res);
+    }
 
+    update_visitors::update_item(&client, TABLE_NAME, item_id).await?;
+    let total_visitors = get_visitors::get_item(&client, TABLE_NAME, item_id).await?;
+
+    // Create response message from total visitors, if there isn't a visitor count return error to the user
     let message = match total_visitors {
         Some(count) => format!("{{\"visitors\": {}}}", count),
-        None => "{\"message\": \"no visitor count available.\"}".to_string(),
+        None => {
+            return Ok(Response::builder()
+                .status(500) // Internal Server Error status code
+                .header("content-type", "application/json")
+                .body("{\"error\": \"Visitor count unavailable.\"}".into())
+                .unwrap());
+        }
     };
 
+    // Send OK response with the visitor count in a JSON format.
     let resp = Response::builder()
         .status(200)
         .header("content-type", "application/json")
@@ -48,17 +59,11 @@ async fn function_handler(req: Request) -> Result<Response<Body>, Error> {
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
 
-    let origins = ["http://localhost:8000".parse().unwrap(),
-        "https://www.google.com".parse().unwrap()];
+    let cors_layer = build_cors_layer();
 
-    let cors_layer = CorsLayer::new()
-        .allow_methods([Method::GET])
-        .allow_origin(origins)
-        .allow_headers(Any);
-
-        let handler = ServiceBuilder::new()
-            .layer(cors_layer)
-            .service(service_fn(function_handler));
+    let handler = ServiceBuilder::new()
+        .layer(cors_layer)
+        .service(service_fn(function_handler));
 
     run(handler).await
 }

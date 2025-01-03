@@ -1,1 +1,24 @@
+.idea/
+
 /target
+
+# Local .terraform directories
+**/.terraform/*
+
+# .tfstate files
+*.tfstate
+*.tfstate.*
+
+# Crash log files
+crash.log
+
+# Plan output files
+*.tfplan
+
+# Backup files created by Terraform
+*.tfvars.backup
+
+# Files with sensitive variables
+*.tfvars
+
+**/.infracost/*
