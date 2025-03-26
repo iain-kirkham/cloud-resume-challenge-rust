@@ -10,21 +10,13 @@ pub fn build_cors_layer() -> CorsLayer {
     ];
 
     CorsLayer::new()
-        .allow_methods([Method::GET, Method::OPTIONS])
+        .allow_methods([Method::POST, Method::OPTIONS])
         .allow_origin(origins)
         .allow_headers(Any)
 }
 
-pub fn handle_favicon_request() -> Response<Body> {
-    Response::builder()
-        .status(204) // HTTP No Content status code
-        .header("content-type", "image/x-icon")
-        .body(Body::Empty)
-        .unwrap()
-}
-
-pub fn reject_non_get_method(req: &Request) -> Option<Response<Body>> {
-    if req.method() != Method::GET {
+pub fn reject_non_post_method(req: &Request) -> Option<Response<Body>> {
+    if req.method() != Method::POST {
         Some(
             Response::builder()
                 .status(405) // HTTP Method not allowed status code

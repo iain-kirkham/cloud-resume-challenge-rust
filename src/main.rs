@@ -2,33 +2,19 @@ use aws_config::{BehaviorVersion, Region};
 use aws_sdk_dynamodb::Client;
 use cloud_resume_challenge_rust::get_visitors;
 use cloud_resume_challenge_rust::update_visitors;
-use cloud_resume_challenge_rust::utils::{
-    build_cors_layer, handle_favicon_request, reject_non_get_method,
-};
+use cloud_resume_challenge_rust::utils::{build_cors_layer, reject_non_post_method};
 use lambda_http::tower::ServiceBuilder;
 use lambda_http::{run, service_fn, tracing, Body, Error, Request, Response};
 
 const REGION: &str = "eu-west-2";
 const TABLE_NAME: &str = "cloud-resume-challenge";
 
-async fn function_handler(req: Request) -> Result<Response<Body>, Error> {
-    if req.uri().path() == "/favicon.ico" {
-        return Ok(handle_favicon_request());
-    }
-
-    // Initialise AWS Config
-    let config = aws_config::defaults(BehaviorVersion::latest())
-        .region(Region::new(REGION))
-        .load()
-        .await;
-
-    let client = Client::new(&config);
-
-    let item_id = "blog";
-
-    if let Some(res) = reject_non_get_method(&req) {
+async fn function_handler(client: &Client, req: Request) -> Result<Response<Body>, Error> {
+    if let Some(res) = reject_non_post_method(&req) {
         return Ok(res);
     }
+
+    let item_id = "blog";
 
     update_visitors::update_item(&client, TABLE_NAME, item_id).await?;
     let total_visitors = get_visitors::get_item(&client, TABLE_NAME, item_id).await?;
@@ -59,11 +45,19 @@ async fn function_handler(req: Request) -> Result<Response<Body>, Error> {
 async fn main() -> Result<(), Error> {
     tracing::init_default_subscriber();
 
+    let shared_config = aws_config::defaults(BehaviorVersion::latest())
+        .region(Region::new(REGION))
+        .load()
+        .await;
+
+    let client = Client::new(&shared_config);
+    let shared_client = &client;
+
     let cors_layer = build_cors_layer();
 
     let handler = ServiceBuilder::new()
         .layer(cors_layer)
-        .service(service_fn(function_handler));
+        .service(service_fn(move |req: Request| function_handler(shared_client, req)));
 
     run(handler).await
 }
