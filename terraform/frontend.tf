@@ -33,18 +33,20 @@ resource "aws_cloudfront_origin_access_control" "default" {
   signing_protocol                  = "sigv4"
 }
 
+resource "aws_cloudfront_origin_access_control" "default" {
+  name                              = "cloud-resume-oac"
+  description                       = "Origin Access Control for Cloud Resume Challenge"
+  origin_access_control_origin_type = "s3"
+  signing_behavior                  = "always"
+  signing_protocol                  = "sigv4"
+}
+
 resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
   origin {
     domain_name              = aws_s3_bucket.cloud_resume_bucket.bucket_regional_domain_name
     origin_access_control_id = aws_cloudfront_origin_access_control.default.id
-    origin_id = "cloud-resume-s3-origin"
+    origin_id               = "cloud-resume-s3-origin"
 
-    custom_origin_config {
-      http_port              = 80
-      https_port             = 443
-      origin_protocol_policy = "match-viewer"
-      origin_ssl_protocols   = ["TLSv1.2"]
-    }
   }
 
   enabled             = true
@@ -53,7 +55,6 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
   http_version        = "http2and3"
 
   aliases = [var.domain_name]
-
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -79,7 +80,6 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
     error_code            = 404
     response_code         = 404
     response_page_path    = "/404/index.html"
-
   }
 
   price_class = var.price_class
@@ -97,7 +97,5 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
     minimum_protocol_version       = "TLSv1.2_2021"
     ssl_support_method             = "sni-only"
   }
-
 }
-
 
