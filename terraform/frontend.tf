@@ -33,14 +33,6 @@ resource "aws_cloudfront_origin_access_control" "default" {
   signing_protocol                  = "sigv4"
 }
 
-resource "aws_cloudfront_origin_access_control" "default" {
-  name                              = "cloud-resume-oac"
-  description                       = "Origin Access Control for Cloud Resume Challenge"
-  origin_access_control_origin_type = "s3"
-  signing_behavior                  = "always"
-  signing_protocol                  = "sigv4"
-}
-
 resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
   origin {
     domain_name              = aws_s3_bucket.cloud_resume_bucket.bucket_regional_domain_name
