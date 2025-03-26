@@ -70,7 +70,7 @@ resource "aws_apigatewayv2_api" "rust_lambda_apigateway" {
     allow_origins     = [
       "https://iainkirkham.dev",
       "https://www.iainkirkham.dev",
-      "localhost:4321"
+      "http://localhost:4321"
     ]
     expose_headers    = []
     max_age           = 300
