@@ -2,28 +2,41 @@ resource "aws_s3_bucket" "cloud_resume_bucket" {
   bucket = var.bucket_name
 }
 
-resource "aws_s3_bucket_policy" "allow_public_view" {
+resource "aws_s3_bucket_acl" "main" {
   bucket = aws_s3_bucket.cloud_resume_bucket.id
-  policy = jsonencode({
-    Id = "MyPolicy"
-    Statement = [{
-      Action    = "s3:GetObject"
-      Effect    = "Allow"
-      Principal = "*"
-      Resource  = "arn:aws:s3:::${var.bucket_name}/*"
-      Sid       = "PublicReadForGetBucketObjects"
-    }]
-    Version = "2012-10-17"
-  })
+  acl    = "private"
 }
 
-resource "aws_s3_bucket_website_configuration" "cloud-resume-site" {
-  bucket = aws_s3_bucket.cloud_resume_bucket.id
 
-  index_document {
-    suffix = "index.html"
+resource "aws_s3_bucket_policy" "cloudfront_oac_access" {
+  bucket = aws_s3_bucket.cloud_resume_bucket.id
+  policy = data.aws_iam_policy_document.cloudfront_oac_access.json
+}
+
+data "aws_iam_policy_document" "cloudfront_oac_access" {
+  statement {
+    principals {
+      type        = "Service"
+      identifiers = ["cloudfront.amazonaws.com"]
+    }
+
+    actions = [
+      "s3:GetObject"
+    ]
+
+    resources = [
+      aws_s3_bucket.cloud_resume_bucket.arn,
+      "${aws_s3_bucket.cloud_resume_bucket.arn}/*"
+    ]
+
+    condition {
+      test     = "StringEquals"
+      variable = "AWS:SourceArn"
+      values   = [aws_cloudfront_distribution.cloud_resume_challenge_distribution.arn]
+    }
   }
 }
+
 
 resource "aws_cloudfront_origin_access_control" "default" {
   name                              = "cloud-resume-oac"
@@ -54,7 +67,7 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
     target_origin_id = "cloud-resume-s3-origin"
 
     forwarded_values {
-      query_string = false
+      query_string = true
 
       cookies {
         forward = "none"
