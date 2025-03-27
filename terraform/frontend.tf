@@ -2,12 +2,6 @@ resource "aws_s3_bucket" "cloud_resume_bucket" {
   bucket = var.bucket_name
 }
 
-resource "aws_s3_bucket_acl" "main" {
-  bucket = aws_s3_bucket.cloud_resume_bucket.id
-  acl    = "private"
-}
-
-
 resource "aws_s3_bucket_policy" "cloudfront_oac_access" {
   bucket = aws_s3_bucket.cloud_resume_bucket.id
   policy = data.aws_iam_policy_document.cloudfront_oac_access.json
@@ -59,7 +53,7 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
   default_root_object = "index.html"
   http_version        = "http2and3"
 
-  aliases = [var.domain_name]
+  aliases = ["test.iainkirkham.dev"]
 
   default_cache_behavior {
     allowed_methods  = ["DELETE", "GET", "HEAD", "OPTIONS", "PATCH", "POST", "PUT"]
@@ -97,7 +91,7 @@ resource "aws_cloudfront_distribution" "cloud_resume_challenge_distribution" {
   }
 
   viewer_certificate {
-    acm_certificate_arn            = var.acm_certificate_arn
+    acm_certificate_arn            = "arn:aws:acm:us-east-1:728092359661:certificate/4d74df6a-16f4-4f18-add8-12ff0e43248e"
     cloudfront_default_certificate = false
     minimum_protocol_version       = "TLSv1.2_2021"
     ssl_support_method             = "sni-only"
