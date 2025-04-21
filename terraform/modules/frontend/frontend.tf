@@ -1,5 +1,5 @@
 resource "aws_s3_bucket" "cloud_resume_bucket" {
-  bucket = var.bucket_name
+  bucket = "iain-cloud-site"
 }
 
 resource "aws_s3_bucket_policy" "cloudfront_oac_access" {
