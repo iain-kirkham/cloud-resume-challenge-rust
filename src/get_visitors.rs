@@ -14,9 +14,9 @@ pub async fn get_item(
         .send()
         .await?;
 
-    // Check if the item was found, if no item is found return none, then try to find the visitors attribute,
-    // if the attribute is not found return none, then parse the visitors attribute and return the visitor count,
-    // if the visitors attribute does not contain a number return none.
+    // Check if the item was found if no item is found return none, then try to find the visitor attribute,
+    // if the attribute is not found, return none, then parse the visitor attribute and return the visitor count,
+    // if the visitor attribute does not contain a number return none.
     if let Some(item) = result.item {
         match item.get("visitors") {
             Some(AttributeValue::N(count)) => {

@@ -17,7 +17,18 @@ terraform {
 }
 
 provider "aws" {
-  region = "eu-west-2"
+  region = var.region
+}
+
+
+module "backend" {
+  source = "./modules/backend"
+}
+
+module "frontend" {
+  source = "./modules/frontend"
+  acm_certificate_arn = var.acm_certificate_arn
+  route53_zone_id = var.route53_zone_id
 }
 
 

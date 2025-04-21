@@ -16,11 +16,11 @@ pub fn build_cors_layer() -> CorsLayer {
 }
 
 pub fn reject_non_post_method(req: &Request) -> Option<Response<Body>> {
-    if req.method() != Method::POST {
-        Some(
+    if req.method() != Method::POST && req.method() != Method::OPTIONS {
+    Some(
             Response::builder()
                 .status(405) // HTTP Method not allowed status code
-                .body("Method Not Allowed".into())
+                .body("Method is Not Allowed".into())
                 .unwrap(),
         )
     } else {
