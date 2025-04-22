@@ -9,6 +9,7 @@ const REGION: &str = "eu-west-2";
 // Integration test for get visitors function, creates a test item to read from the test table
 // Then checks that the item is the same as expected, and then removes the test item after tests.
 #[tokio::test]
+#[allow(clippy::result_large_err)]
 async fn test_get_item() -> Result<(), Error> {
     // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())

@@ -9,6 +9,7 @@ const TEST_ITEM_ID: &str = "test_item";
 
 // Integration test for visitor update using a test table and values,
 #[tokio::test]
+#[allow(clippy::result_large_err)]
 async fn test_update_visitors() -> Result<(), Error> {
     // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())
@@ -27,7 +28,7 @@ async fn test_update_visitors() -> Result<(), Error> {
         .send()
         .await?;
 
-    // Take the visitors from the table then update the visitors item, and take the new visitor value
+    // Take the visitors from the table, then update the visitor item and take the new visitor value
     let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
     update_visitors::update_item(&client, TABLE_NAME, TEST_ITEM_ID).await?;
     let visitors_updated = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
@@ -46,7 +47,7 @@ async fn test_update_visitors() -> Result<(), Error> {
     Ok(())
 }
 
-// Get the visitors from the table, ensuring that it is not empty, and is a number
+// Get the visitors from the table, ensuring that it is not empty and is a number
 async fn get_test_visitors(client: &Client, table: &str, item_id: &str) -> Result<i32, Error> {
     let response = client
         .get_item()

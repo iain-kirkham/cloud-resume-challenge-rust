@@ -37,6 +37,12 @@ jobs:
       - name: Run cargo clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
+      - name: Configure AWS Credentials for Deployment
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::728092359661:role/github-actions-role
+          aws-region: eu-west-2
+
       - name: Run cargo test
         run: cargo test --workspace --locked
 
@@ -48,10 +54,6 @@ jobs:
 
       - name: Deploy lambda
         run: cargo lambda deploy
-        env:
-            AWS_REGION: eu-west-2
-            AWS_ROLE_ARN: arn:aws:iam::728092359661:role/github-actions-role
-            AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/oidc_token
 
 permissions:
   id-token: write
