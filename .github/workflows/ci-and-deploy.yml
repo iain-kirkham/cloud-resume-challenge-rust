@@ -1,45 +1,58 @@
-name: CI and Deploy
+name: Deploy Rust Lambda
 
 on:
   push:
-    branches:
-      - main  # Run on pushes to the main branch
+    branches: [main]
+
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  test-and-lint:
-    runs-on: ubuntu-latest
-
-    steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
-
-    - name: Set up Rust
-      uses: actions-rs/toolchain@v1
-      with:
-        toolchain: stable
-        override: true
-
-    - name: Run cargo test
-      run: cargo test --all --locked
-
-    - name: Run cargo clippy
-      run: cargo clippy --all-targets --all-features -- -D warnings
-
   deploy:
-    needs: test-and-lint
-    runs-on: ubuntu-latest
-
+    runs-on: ubuntu-24.04-arm
     steps:
-    - name: Checkout code
-      uses: actions/checkout@v3
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up AWS CLI
-      uses: aws-actions/configure-aws-credentials@v2
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-        aws-region: YOUR_AWS_REGION
+      - name: Setup Rust
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
 
-    - name: Deploy Lambda
-      run: |
-        # Ensure you have a deployment script or CLI command
-        ./deploy-lambda.sh  # Replace this with your actual deploy script or commands
+      # Cache Rust dependencies for faster builds
+      - name: Cache cargo registry
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/registry
+            ~/.cargo/git
+            target
+          key: cargo-build-cache
+
+      - name: Install cargo-lambda
+        run: cargo install cargo-lambda
+
+      - name: Run cargo clippy
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Run cargo test
+        run: cargo test --workspace --locked
+
+      - name: Build Rust Lambda
+        run: |
+          cargo lambda build \
+            --release --arm64 \
+            --output-format zip
+
+      - name: Deploy lambda
+        run: cargo lambda deploy
+        env:
+            AWS_REGION: eu-west-2
+            AWS_ROLE_ARN: arn:aws:iam::728092359661:role/github-actions-role
+            AWS_WEB_IDENTITY_TOKEN_FILE: /tmp/oidc_token
+
+permissions:
+  id-token: write
+  contents: read

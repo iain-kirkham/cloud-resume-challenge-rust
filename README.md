@@ -27,8 +27,8 @@ This repository contains the backend API implementation for the Cloud Resume Cha
 ## ⚠️ Requirements:
 
 - **[Rust](https://www.rust-lang.org/)** Version 1.84 or higher.
-- **[Cargo Lambda](https://www.cargo-lambda.info/)** A  tool for building and deploying Rust functions on  AWS Lambda
-- **[MSYS2](https://www.msys2.org/)** This project  uses ARM64 based  Lambdas which requires MSYS2 to provide  libraries for cross-compilation on  Windows based machines.  Ensure that the MSYS2 `bin` directory is in your system's PATH.
+- **[Cargo Lambda](https://www.cargo-lambda.info/)** A tool for building and deploying Rust functions on AWS Lambda
+- **[MSYS2](https://www.msys2.org/)** This project uses ARM64-based Lambdas, which requires MSYS2 to provide libraries for cross-compilation on  Windows based machines.  Ensure that the MSYS2 `bin` directory is in your system's PATH.
 - **[Terraform](https://www.terraform.io/)** Version 1.10 or higher. You will need Terraform installed to provision and manage the cloud infrastructure defined in the `terraform/` directory.
 - **[AWS CLI](https://aws.amazon.com/cli/)** The AWS Command Line Interface needs to be installed and configured with appropriate credentials to interact with your AWS account.
 
