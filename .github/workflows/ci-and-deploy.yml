@@ -46,11 +46,12 @@ jobs:
       - name: Run cargo test
         run: cargo test --workspace --locked
 
-      - name: Install Zig 0.14.0 for aarch64
-        run: |
-          wget https://ziglang.org/download/0.14.0/zig-linux-aarch64-0.14.0.tar.xz
-          tar -xf zig-linux-aarch64-0.14.0.tar.xz
-          sudo mv zig-linux-aarch64-0.14.0/zig /usr/local/bin/
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Install Zig with pip3
+        run: pip3 install ziglang
 
       - name: Build Rust Lambda
         run: |
