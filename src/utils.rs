@@ -7,6 +7,7 @@ pub fn build_cors_layer() -> CorsLayer {
         "http://localhost:4321".parse().unwrap(),
         "https://www.iainkirkham.dev".parse().unwrap(),
         "https://iainkirkham.dev".parse().unwrap(),
+        "https://test.iainkirkham.dev".parse().unwrap(),
     ];
 
     CorsLayer::new()
