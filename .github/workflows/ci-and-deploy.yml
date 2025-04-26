@@ -31,27 +31,25 @@ jobs:
             target
           key: cargo-build-cache
 
+      - name: Install Python 3
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
       - name: Install cargo-lambda
-        run: cargo install cargo-lambda
+        run: pip install cargo-lambda
 
       - name: Run cargo clippy
         run: cargo clippy --all-targets --all-features -- -D warnings
 
       - name: Configure AWS Credentials for Deployment
-        uses: aws-actions/configure-aws-credentials@v1
+        uses: aws-actions/configure-aws-credentials@v4
         with:
           role-to-assume: arn:aws:iam::728092359661:role/github-actions-role
           aws-region: eu-west-2
 
       - name: Run cargo test
         run: cargo test --workspace --locked
-
-      - name: Install Python 3
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.13'
-      - name: Install Zig with pip3
-        run: pip3 install ziglang
 
       - name: Build Rust Lambda
         run: |
