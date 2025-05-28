@@ -12,6 +12,7 @@ resource "aws_iam_role" "frontend_github_actions_role" {
         }
         Condition = {
           StringLike = {
+            "token.actions.githubusercontent.com:aud": "sts.amazonaws.com",
             "token.actions.githubusercontent.com:sub" = "repo:iain-kirkham/astro-portfolio:*"
           }
         }

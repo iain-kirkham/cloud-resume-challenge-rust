@@ -1,20 +1,20 @@
 #  Cloud Resume Challenge Rust (Backend)
 
-This repository contains the backend API implementation for my Cloud Resume Challenge, built using Rust and deployed using AWS Lambda. The function retrieves and updates the visitor counter.
-
+This repository contains the backend API and Terraform configuration for my Cloud Resume Challenge, built using Rust and deployed using AWS Lambda. The function retrieves and updates the visitor counter.
+Please check out the [frontend repository](https://github.com/iain-kirkham/astro-portfolio) for the frontend code.
 
 ## ✨ Key Features:
 
  - **Serverless API:** Implemented using Rust and deployed as AWS Lambda functions for scalability and cost-effectiveness.
- - **Visitor Counter:** Implements functionality to track and retrieve the number of visitors to my blog.
- - **Cloud Infrastructure as Code (IaC):** Infrastructure is provisioned and managed using Terraform, demonstrating infrastructure automation skills.
+ - **Visitor Counter:** Implements functionality to retrieve and update the number of visitors to my blog.
+ - **Cloud Infrastructure as Code (IaC):** Infrastructure is provisioned and managed using Terraform for infrastructure automation.
  - **Automated CI/CD:** Utilises GitHub Actions for continuous integration and continuous deployment, ensuring code quality, package security and automated deployments.
  - **Security Scanning:** Includes automated security scanning as part of the CI/CD pipeline.
- - **Integration Tests:** Contains integration tests to verify the functionality of the visitor counter API endpoints.
+ - **Integration Tests:** Contains integration tests to verify the functionality of the visitor counter API.
 
 ## 💻 Technologies Used:
 
-- **Backend:** Rust
+- **Language:** Rust
 - **Cloud Provider:** Amazon Web Services (AWS)
 - **Serverless Compute:** AWS Lambda
 - **API Gateway:** AWS API Gateway
@@ -33,11 +33,11 @@ This repository contains the backend API implementation for my Cloud Resume Chal
 
 **Note:** Ensure that your AWS credentials configured with the AWS CLI have the necessary permissions to create and manage the resources defined in the Terraform configuration (Lambda functions, API Gateway, DynamoDB tables, IAM roles, S3 buckets, Route53, CloudFront).
 
-The frontend (hosted on AWS S3 and CloudFront) interacts with the backend API through AWS API Gateway, which routes requests to the Rust-based AWS Lambda functions.
-These functions handle retrieving resume data and managing the visitor count stored in AWS DynamoDB.
-The infrastructure for this setup is defined and managed using Terraform.
-
 ## ☁️ Cloud Architecture Diagram:
+
+The frontend (hosted on AWS S3 and CloudFront) interacts with the backend API through AWS API Gateway, which routes requests to the AWS Lambda functions.
+The function handles retrieving and updating the visitor count stored in AWS DynamoDB.
+The infrastructure for this setup is defined and managed using Terraform.
 
 ![AWS workflow](./aws-workflow.webp)
 
@@ -57,7 +57,6 @@ The infrastructure for this setup is defined and managed using Terraform.
 │   ├── update_visitors.rs       #Updates the DynamoDB reflecting the new visitor count
 │   └── utils.rs                 #Utility functions for CORS and HTTP methods
 ├── terraform/
-│   ├── .terraform/
 │   ├── lambda/                  #Directory containing lambda zip
 ├── modules/
 │   ├── backend/
@@ -79,7 +78,7 @@ The infrastructure for this setup is defined and managed using Terraform.
 
 ## ⚙️ Running Tests:
 
-Integration tests for the visitor counter functionality can be executed locally using the following command:
+Integration tests for the visitor counter can be executed locally using the following command:
 
 ```bash
 cargo test
@@ -90,3 +89,5 @@ This command will run the tests defined in the `tests/` directory.
 
 ## 🛠️ Future Enhancements:
 
+ - **Enhanced Observability:** I'm looking into implementing robust logging with CloudWatch Logging, allowing for better debugging if issues arise.
+ - **Enhanced API** that will track visitor counts for individual blog posts, helping me understand content engagement.
