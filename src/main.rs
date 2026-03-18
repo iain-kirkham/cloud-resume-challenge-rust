@@ -23,11 +23,14 @@ async fn function_handler(client: &Client, req: Request) -> Result<Response<Body
     let message = match total_visitors {
         Some(count) => format!("{{\"visitors\": {}}}", count),
         None => {
-            return Ok(Response::builder()
+            tracing::error!(table_name = TABLE_NAME, item_id, "visitor count unavailable");
+            let resp = Response::builder()
                 .status(500) // Internal Server Error status code
                 .header("content-type", "application/json")
                 .body("{\"error\": \"Visitor count unavailable.\"}".into())
-                .unwrap());
+                .map_err(Box::new)?;
+
+            return Ok(resp);
         }
     };
 

@@ -1,5 +1,6 @@
 use aws_sdk_dynamodb::types::AttributeValue;
 use aws_sdk_dynamodb::{Client, Error};
+use lambda_http::tracing;
 
 // Get the item from the table using the passed in table and item ID, returning the corresponding value.
 pub async fn get_item(
@@ -23,18 +24,18 @@ pub async fn get_item(
                 match count.parse::<i32>() {
                     Ok(parsed_count) => Ok(Some(parsed_count)),
                     Err(_) => {
-                        // Add logging error: 'visitors' attribute is not a valid number
+                        tracing::error!(table_name, item_id, raw_count = %count, "invalid visitor count value");
                         Ok(None)
                     }
                 }
             }
             _ => {
-                // Add logging Error: 'visitors' attribute is missing
+                tracing::error!(table_name, item_id, "visitors attribute missing");
                 Ok(None)
             }
         }
     } else {
-        // Add logging error: Item not found in response
+        tracing::error!(table_name, item_id, "item not found");
         Ok(None)
     }
 }
