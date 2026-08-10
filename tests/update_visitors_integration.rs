@@ -29,9 +29,11 @@ async fn test_update_visitors() -> Result<(), Error> {
         .await?;
 
     // Take the visitors from the table, then update the visitor item and take the new visitor value
+    // returned directly from the update call itself.
     let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
-    update_visitors::update_item(&client, TABLE_NAME, TEST_ITEM_ID).await?;
-    let visitors_updated = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
+    let visitors_updated = update_visitors::update_item(&client, TABLE_NAME, TEST_ITEM_ID)
+        .await?
+        .expect("Expected updated visitor count to be returned");
 
     // Assert that the updated visitor count is the previous +1, if not print the values that were returned
     assert_eq!(

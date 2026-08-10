@@ -1,6 +1,5 @@
 use aws_config::{BehaviorVersion, Region};
 use aws_sdk_dynamodb::Client;
-use cloud_resume_challenge_rust::get_visitors;
 use cloud_resume_challenge_rust::update_visitors;
 use cloud_resume_challenge_rust::utils::{build_cors_layer, reject_non_post_method};
 use lambda_http::tower::ServiceBuilder;
@@ -16,8 +15,7 @@ async fn function_handler(client: &Client, req: Request) -> Result<Response<Body
 
     let item_id = "blog";
 
-    update_visitors::update_item(client, TABLE_NAME, item_id).await?;
-    let total_visitors = get_visitors::get_item(client, TABLE_NAME, item_id).await?;
+    let total_visitors = update_visitors::update_item(client, TABLE_NAME, item_id).await?;
 
     // Create a response message from total visitors if there isn't a visitor count return error to the user
     let message = match total_visitors {
