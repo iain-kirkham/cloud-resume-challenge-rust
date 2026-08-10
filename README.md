@@ -19,17 +19,41 @@ This project demonstrates more than just writing code. It shows an end-to-end de
 
 ## Architecture
 
-The frontend (S3 + CloudFront) calls API Gateway, which invokes the Rust Lambda. The Lambda updates and reads the visitor count in DynamoDB.
+The frontend is hosted on Cloudflare Pages, which serves the static site, handles edge delivery, manages DNS for the custom domain, and provisions/renews TLS certificates automatically. The frontend calls API Gateway, which invokes the Rust Lambda. The Lambda updates and reads the visitor count in DynamoDB.
 
-Infrastructure for both frontend and backend is defined with Terraform (the repo includes a Terraform Cloud workspace configuration). In a typical workflow a push to the repository triggers CI actions that build and test the code and deploy the Lambda; Terraform (or Terraform Cloud) is used to provision and manage cloud resources such as the S3 bucket, CloudFront distribution, DNS (Route53) and DynamoDB table.
+Backend infrastructure is defined with Terraform (the repo includes a Terraform Cloud workspace configuration). A push to the repository triggers GitHub Actions (authenticating to AWS via OIDC, no long-lived credentials) that build and test the code and deploy the Lambda; Terraform (or Terraform Cloud) provisions and manages backend cloud resources such as IAM roles, the Lambda function, API Gateway, and the DynamoDB table.
 
-This project also uses DNS and TLS services so the site can be reached securely via a custom domain (see the `terraform/modules/frontend` module): Route53 for DNS records and ACM for TLS certificates.
+```mermaid
+flowchart LR
+    User((User)) --> CFP[Cloudflare Pages<br/>static hosting + edge delivery + DNS + TLS]
+    CFP --> APIGW[API Gateway]
+    APIGW --> Lambda[AWS Lambda - Rust]
+    Lambda --> DDB[(DynamoDB)]
+
+    GHA[GitHub Actions] -- OIDC --> IAM[AWS IAM]
+    GHA --> TFC[Terraform Cloud]
+    TFC --> Lambda
+    TFC --> APIGW
+    TFC --> DDB
+```
+
+### Legacy architecture (portfolio reference)
+
+The project originally hosted the frontend on AWS, before migrating to Cloudflare Pages. This earlier architecture is kept here as a portfolio reference.
+
+The frontend (S3 + CloudFront) called API Gateway, which invoked the Rust Lambda. The Lambda updated and read the visitor count in DynamoDB.
+
+Infrastructure for both frontend and backend was defined with Terraform (the repo includes a Terraform Cloud workspace configuration). In a typical workflow a push to the repository triggered CI actions that built and tested the code and deployed the Lambda; Terraform (or Terraform Cloud) was used to provision and manage cloud resources such as the S3 bucket, CloudFront distribution, DNS (Route53) and DynamoDB table.
+
+This project also used DNS and TLS services so the site could be reached securely via a custom domain (see the `terraform/modules/frontend` module): Route53 for DNS records and ACM for TLS certificates.
 
 ![AWS workflow](./aws-workflow.webp)
 
+> **Note:** The `terraform/modules/frontend` module still exists in this repo, but the AWS resources it describes (S3, CloudFront, Route53, ACM) are no longer deployed — the frontend now runs on Cloudflare Pages, provisioned outside Terraform. The module is retained here as a portfolio reference and has not been reconciled with current infrastructure state.
+
 ## API usage (example)
 
-Replace `<API_URL>` with your API Gateway URL (for a deployed stack this will be the CloudFront or API Gateway URL/alias).
+Replace `<API_URL>` with your API Gateway URL.
 
 ```bash
 # increment and fetch visitors (POST request)
@@ -65,14 +89,8 @@ Save the request in a collection for repeatable testing. You can also run the co
 
 ## AWS services used
 
-This project provisions and uses the following AWS services (each is represented in the Terraform modules):
+This project provisions and uses the following AWS services (each is represented in the Terraform `backend` module):
 
-- Amazon S3 — Hosts the frontend static site content.
-- S3 Bucket Policy — Controls access to objects in the S3 bucket (used with CloudFront OAC).
-- Amazon CloudFront — CDN in front of the S3 site for low-latency global delivery and caching.
-- CloudFront Origin Access Control (OAC) — Securely grants CloudFront permission to read objects from the S3 origin.
-- AWS Certificate Manager (ACM) — Provides TLS certificates that CloudFront uses to serve content over HTTPS.
-- Amazon Route 53 — DNS hosting for the custom domain (alias records point to CloudFront).
 - Amazon API Gateway (HTTP API) — Public HTTP endpoint that routes requests to Lambda.
 - AWS Lambda — Runs the Rust backend function (serverless compute).
 - Amazon DynamoDB — Stores the visitor counter (managed NoSQL database).
@@ -81,6 +99,17 @@ This project provisions and uses the following AWS services (each is represented
 - Amazon CloudWatch Logs & Metrics — Stores Lambda execution logs and (optionally) custom metrics and alarms for observability.
 
 Infrastructure is managed with Terraform and deployments are automated with GitHub Actions. The CI role and IAM bindings are declared in the backend module so GitHub Actions can deploy safely.
+
+### Legacy AWS services (no longer deployed)
+
+The following services were used for frontend hosting before the migration to Cloudflare Pages. Their Terraform definitions still exist in `terraform/modules/frontend`, but the actual resources are no longer deployed on AWS — the module has not been reconciled with current state and is kept for portfolio reference only.
+
+- Amazon S3 — Hosted the frontend static site content.
+- S3 Bucket Policy — Controlled access to objects in the S3 bucket (used with CloudFront OAC).
+- Amazon CloudFront — CDN in front of the S3 site for low-latency global delivery and caching.
+- CloudFront Origin Access Control (OAC) — Securely granted CloudFront permission to read objects from the S3 origin.
+- AWS Certificate Manager (ACM) — Provided TLS certificates that CloudFront used to serve content over HTTPS.
+- Amazon Route 53 — DNS hosting for the custom domain (alias records pointed to CloudFront).
 
 ## Other tools
 
@@ -101,7 +130,7 @@ The Lambda reads the DynamoDB table name from an environment variable set in Ter
 - **AWS Lambda (ARM64, `provided.al2023`):** Runs the backend as serverless functions, which helps keep cost low at small traffic levels while scaling automatically.
 - **API Gateway HTTP API:** Public entry point that securely forwards web requests to Lambda.
 - **DynamoDB:** Managed NoSQL data store for the visitor counter, chosen for simplicity and low operational overhead.
-- **Terraform:** Infrastructure as code tooling used to provision backend and frontend AWS resources consistently.
+- **Terraform:** Infrastructure as code tooling used to provision backend AWS resources consistently. The `frontend` module still exists in the repo but its resources (S3, CloudFront, Route53, ACM) are no longer deployed — see [Legacy AWS services](#legacy-aws-services-no-longer-deployed).
 - **GitHub Actions:** CI/CD pipeline that checks code quality and deploys changes on pushes to `master`.
 
 ## Prerequisites
@@ -131,7 +160,7 @@ The Lambda reads the DynamoDB table name from an environment variable set in Ter
 │   ├── outputs.tf
 │   └── modules/
 │       ├── backend/
-│       └── frontend/
+│       └── frontend/          # legacy, no longer deployed (see README)
 └── .github/workflows/
 	├── ci-and-deploy.yml
 	└── security-scan.yml

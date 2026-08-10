@@ -7,7 +7,11 @@
 # permanently specified in this file.
 
 [advisories]
-ignore = [] # advisory IDs to ignore e.g. ["RUSTSEC-2019-0001", ...]
+ignore = [
+    "RUSTSEC-2026-0098", # rustls-webpki wildcard name constraints
+    "RUSTSEC-2026-0099", # rustls-webpki URI name constraints
+    "RUSTSEC-2026-0104"  # rustls-webpki CRL parsing panic
+] # advisory IDs to ignore e.g. ["RUSTSEC-2019-0001", ...]
 informational_warnings = ["unmaintained"] # warn for categories of informational advisories
 severity_threshold = "low" # CVSS severity ("none", "low", "medium", "high", "critical")
 
