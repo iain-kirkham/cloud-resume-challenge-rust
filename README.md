@@ -45,11 +45,11 @@ The frontend (S3 + CloudFront) called API Gateway, which invoked the Rust Lambda
 
 Infrastructure for both frontend and backend was defined with Terraform (the repo includes a Terraform Cloud workspace configuration). In a typical workflow a push to the repository triggered CI actions that built and tested the code and deployed the Lambda; Terraform (or Terraform Cloud) was used to provision and manage cloud resources such as the S3 bucket, CloudFront distribution, DNS (Route53) and DynamoDB table.
 
-This project also used DNS and TLS services so the site could be reached securely via a custom domain (see the `terraform/modules/frontend` module): Route53 for DNS records and ACM for TLS certificates.
+This project also used DNS and TLS services so the site could be reached securely via a custom domain (see the `terraform/legacy/frontend` module): Route53 for DNS records and ACM for TLS certificates.
 
 ![AWS workflow](./aws-workflow.webp)
 
-> **Note:** The `terraform/modules/frontend` module still exists in this repo, but the AWS resources it describes (S3, CloudFront, Route53, ACM) are no longer deployed — the frontend now runs on Cloudflare Pages, provisioned outside Terraform. The module is retained here as a portfolio reference and has not been reconciled with current infrastructure state.
+> **Note:** The `terraform/legacy/frontend` module still exists in this repo, but the AWS resources it describes (S3, CloudFront, Route53, ACM) are no longer deployed — the frontend now runs on Cloudflare Pages, provisioned outside Terraform. It has been moved out of the root Terraform config so it is no longer applied, and is retained here purely as a portfolio reference.
 
 ## API usage (example)
 
@@ -102,7 +102,7 @@ Infrastructure is managed with Terraform and deployments are automated with GitH
 
 ### Legacy AWS services (no longer deployed)
 
-The following services were used for frontend hosting before the migration to Cloudflare Pages. Their Terraform definitions still exist in `terraform/modules/frontend`, but the actual resources are no longer deployed on AWS — the module has not been reconciled with current state and is kept for portfolio reference only.
+The following services were used for frontend hosting before the migration to Cloudflare Pages. Their Terraform definitions still exist in `terraform/legacy/frontend`, but the actual resources are no longer deployed on AWS and the module is excluded from the root Terraform config — it is kept for portfolio reference only.
 
 - Amazon S3 — Hosted the frontend static site content.
 - S3 Bucket Policy — Controlled access to objects in the S3 bucket (used with CloudFront OAC).

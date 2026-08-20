@@ -25,10 +25,7 @@ module "backend" {
   source = "./modules/backend"
 }
 
-module "frontend" {
-  source = "./modules/frontend"
-  acm_certificate_arn = var.acm_certificate_arn
-  route53_zone_id = var.route53_zone_id
-}
-
+# The frontend module (S3 + CloudFront + Route53) is no longer deployed here.
+# The frontend now runs on Cloudflare Pages, provisioned outside Terraform.
+# The module code is kept as a portfolio reference at terraform/legacy/frontend.
 
