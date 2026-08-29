@@ -1,7 +1,6 @@
-variable "region" {
-  description = "AWS Region to deploy resources"
+variable "zone_id" {
+  description = "Cloudflare zone ID for the domain"
   type        = string
-  default     = "eu-west-2"
 }
 
 variable "domain_name" {
@@ -10,25 +9,26 @@ variable "domain_name" {
   default     = "iainkirkham.dev"
 }
 
-variable "cloudflare_api_token" {
-  description = "Cloudflare API token (scoped: Zone Settings Edit, Firewall Services Edit)"
+variable "ssl_mode" {
+  description = "Zone SSL/TLS encryption mode"
   type        = string
-  sensitive   = true
+  default     = "full"
 }
 
-variable "cloudflare_zone_id" {
-  description = "Cloudflare zone ID for domain_name"
+variable "security_level" {
+  description = "Zone security level"
   type        = string
+  default     = "medium"
 }
 
-variable "cloudflare_min_tls_version" {
+variable "min_tls_version" {
   description = "Minimum TLS version accepted by the zone"
   type        = string
   default     = "1.0"
 }
 
-variable "cloudflare_rate_limit_rules" {
-  description = "Rate limiting rules for the zone"
+variable "rate_limit_rules" {
+  description = "Rate limiting rules for the zone, expressed as Cloudflare ruleset rules"
   type = list(object({
     ref         = string
     description = string
@@ -44,8 +44,8 @@ variable "cloudflare_rate_limit_rules" {
   default = []
 }
 
-variable "cloudflare_firewall_rules" {
-  description = "Custom firewall/blocking rules for the zone"
+variable "firewall_rules" {
+  description = "Custom firewall/blocking rules for the zone, expressed as Cloudflare ruleset rules"
   type = list(object({
     ref         = string
     description = string

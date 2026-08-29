@@ -1,0 +1,8 @@
+target/
+.git/
+.idea/
+.claude/
+.cargo/
+tests/
+*.webp
+terraform/.terraform/
