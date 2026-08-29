@@ -1,0 +1,32 @@
+# Copy relevant values into your Terraform Cloud workspace variables.
+# Do NOT put real values in a committed terraform.tfvars file.
+# (Values below mirror what's currently live on the zone, pulled via the
+# Cloudflare API, so `terraform plan` after import comes in clean.)
+
+cloudflare_api_token       = "" # sensitive - set as a TFC sensitive variable, not here
+cloudflare_zone_id         = "c909fdb29289d8896da858bce4c05fcf"
+cloudflare_min_tls_version = "1.0"
+
+cloudflare_rate_limit_rules = [
+  {
+    ref         = "cf8912234a774bce8900bdaa86f77f59"
+    description = "Rate Limit High Frequency Requests"
+    expression   = "(http.request.uri.path contains \"/\")"
+    action       = "block"
+    ratelimit = {
+      characteristics     = ["ip.src", "cf.colo.id"]
+      period              = 10
+      requests_per_period = 50
+      mitigation_timeout  = 10
+    }
+  }
+]
+
+cloudflare_firewall_rules = [
+  {
+    ref         = "16a7230499984032842bfc1924e100fd"
+    description = "Block Exploit and Admin Probes"
+    expression  = "(http.request.uri.path contains \"/admin\") or (http.request.uri.path contains \"/administrator\") or (http.request.uri.path contains \"/wp-\") or (http.request.uri.path contains \"/xmlrpc\") or (http.request.uri.path contains \"/.env\") or (http.request.uri.path contains \"/.git\") or (http.request.uri.path contains \"/.svn\") or (http.request.uri.path contains \"/.aws\") or (http.request.uri.path contains \"/.kube\") or (http.request.uri.path contains \"/.ssh\") or (http.request.uri.path contains \"/.DS_Store\") or (http.request.uri.path contains \"/phpmyadmin\") or (http.request.uri.path contains \"/pma\") or (http.request.uri.path contains \"/adminer\") or (http.request.uri.path contains \"/dbadmin\") or (http.request.uri.path contains \"/config\") or (http.request.uri.path contains \"/vendor\") or (http.request.uri.path contains \"/node_modules\") or (http.request.uri.path contains \"/autodiscover\") or (http.request.uri.path contains \"/wpad\") or (http.request.uri.path contains \"/actuator\") or (http.request.uri.path contains \"/heapdump\") or (http.request.uri.path contains \"/swagger\") or (http.request.uri.path contains \"/api-docs\") or (http.request.uri.path contains \"/setup.php\") or (http.request.uri.path contains \"/install.php\") or (http.request.uri.path contains \"/cpanel\") or (http.request.uri.path contains \"/webmail\") or (http.request.uri.path contains \"/server-status\") or (http.request.uri.path contains \"/.bak\") or (http.request.uri.path contains \"/dump.sql\")"
+    action      = "block"
+  }
+]
