@@ -8,7 +8,7 @@ pub async fn update_item(
     client: &Client,
     table_name: &str,
     item_id: &str,
-) -> Result<Option<i32>, Error> {
+) -> Result<Option<i32>, Box<Error>> {
     let result = client
         .update_item()
         .table_name(table_name)
@@ -17,7 +17,8 @@ pub async fn update_item(
         .expression_attribute_values(":inc", AttributeValue::N("1".to_string()))
         .return_values(ReturnValue::UpdatedNew)
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     match result.attributes.and_then(|attrs| attrs.get("visitors").cloned()) {
         Some(AttributeValue::N(count)) => match count.parse::<i32>() {

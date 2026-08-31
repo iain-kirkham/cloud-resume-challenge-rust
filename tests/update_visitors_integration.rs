@@ -9,8 +9,7 @@ const TEST_ITEM_ID: &str = "test_item";
 
 // Integration test for visitor update using a test table and values,
 #[tokio::test]
-#[allow(clippy::result_large_err)]
-async fn test_update_visitors() -> Result<(), Error> {
+async fn test_update_visitors() -> Result<(), Box<Error>> {
     // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())
         .region(Region::new(REGION))
@@ -26,11 +25,14 @@ async fn test_update_visitors() -> Result<(), Error> {
         .item("ID", AttributeValue::S(TEST_ITEM_ID.to_string()))
         .item("visitors", AttributeValue::N("0".to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     // Take the visitors from the table, then update the visitor item and take the new visitor value
     // returned directly from the update call itself.
-    let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
+    let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID)
+        .await
+        .map_err(Box::new)?;
     let visitors_updated = update_visitors::update_item(&client, TABLE_NAME, TEST_ITEM_ID)
         .await?
         .expect("Expected updated visitor count to be returned");
@@ -44,7 +46,9 @@ async fn test_update_visitors() -> Result<(), Error> {
         visitors_updated
     );
 
-    cleanup_item(&client, TABLE_NAME, TEST_ITEM_ID).await?;
+    cleanup_item(&client, TABLE_NAME, TEST_ITEM_ID)
+        .await
+        .map_err(Box::new)?;
 
     Ok(())
 }

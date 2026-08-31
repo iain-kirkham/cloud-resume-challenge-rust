@@ -9,8 +9,7 @@ const REGION: &str = "eu-west-2";
 // Integration test for get visitors function, creates a test item to read from the test table
 // Then checks that the item is the same as expected, and then removes the test item after tests.
 #[tokio::test]
-#[allow(clippy::result_large_err)]
-async fn test_get_item() -> Result<(), Error> {
+async fn test_get_item() -> Result<(), Box<Error>> {
     // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())
         .region(Region::new(REGION))
@@ -29,7 +28,8 @@ async fn test_get_item() -> Result<(), Error> {
         .item("ID", AttributeValue::S(item_id.to_string()))
         .item("visitors", AttributeValue::N(visitor_count.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     // Retrieve test item using get_item function
     let result = get_item(&client, TABLE_NAME, item_id).await?;
