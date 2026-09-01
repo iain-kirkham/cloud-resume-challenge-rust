@@ -7,13 +7,14 @@ pub async fn get_item(
     client: &Client,
     table_name: &str,
     item_id: &str,
-) -> Result<Option<i32>, Error> {
+) -> Result<Option<i32>, Box<Error>> {
     let result = client
         .get_item()
         .table_name(table_name)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     // Check if the item was found if no item is found return none, then try to find the visitor attribute,
     // if the attribute is not found, return none, then parse the visitor attribute and return the visitor count,
