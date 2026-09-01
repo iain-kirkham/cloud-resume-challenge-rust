@@ -30,9 +30,7 @@ async fn test_update_visitors() -> Result<(), Box<Error>> {
 
     // Take the visitors from the table, then update the visitor item and take the new visitor value
     // returned directly from the update call itself.
-    let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID)
-        .await
-        .map_err(Box::new)?;
+    let visitors_current = get_test_visitors(&client, TABLE_NAME, TEST_ITEM_ID).await?;
     let visitors_updated = update_visitors::update_item(&client, TABLE_NAME, TEST_ITEM_ID)
         .await?
         .expect("Expected updated visitor count to be returned");
@@ -46,9 +44,7 @@ async fn test_update_visitors() -> Result<(), Box<Error>> {
         visitors_updated
     );
 
-    cleanup_item(&client, TABLE_NAME, TEST_ITEM_ID)
-        .await
-        .map_err(Box::new)?;
+    cleanup_item(&client, TABLE_NAME, TEST_ITEM_ID).await?;
 
     Ok(())
 }
