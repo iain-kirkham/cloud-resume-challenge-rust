@@ -49,12 +49,13 @@ async fn test_get_item() -> Result<(), Box<Error>> {
 }
 
 // Utility function for cleaning up the test table
-async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Error> {
+async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Box<Error>> {
     client
         .delete_item()
         .table_name(table)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
     Ok(())
 }

@@ -54,13 +54,18 @@ async fn test_update_visitors() -> Result<(), Box<Error>> {
 }
 
 // Get the visitors from the table, ensuring that it is not empty and is a number
-async fn get_test_visitors(client: &Client, table: &str, item_id: &str) -> Result<i32, Error> {
+async fn get_test_visitors(
+    client: &Client,
+    table: &str,
+    item_id: &str,
+) -> Result<i32, Box<Error>> {
     let response = client
         .get_item()
         .table_name(table)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     let visitors = response
         .item
@@ -74,12 +79,13 @@ async fn get_test_visitors(client: &Client, table: &str, item_id: &str) -> Resul
 }
 
 // Utility function for cleaning up the test table
-async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Error> {
+async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Box<Error>> {
     client
         .delete_item()
         .table_name(table)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
     Ok(())
 }
