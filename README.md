@@ -21,7 +21,7 @@ This project demonstrates more than just writing code. It shows an end-to-end de
 
 The frontend is hosted on Cloudflare Pages, which serves the static site, handles edge delivery, manages DNS for the custom domain, and provisions/renews TLS certificates automatically. The frontend calls API Gateway, which invokes the Rust Lambda. The Lambda updates and reads the visitor count in DynamoDB.
 
-Backend infrastructure is defined with Terraform (the repo includes a Terraform Cloud workspace configuration). A push to the repository triggers GitHub Actions (authenticating to AWS via OIDC, no long-lived credentials) that build and test the code and deploy the Lambda; Terraform (or Terraform Cloud) provisions and manages backend cloud resources such as IAM roles, the Lambda function, API Gateway, and the DynamoDB table.
+Backend infrastructure (IAM roles, Lambda, API Gateway, DynamoDB) and Cloudflare zone-level configuration (TLS/security settings, rate-limit and WAF rules) are both defined with Terraform (the repo includes a Terraform Cloud workspace configuration). The Pages site itself — build/deploy and apex/www DNS — is provisioned outside Terraform via Pages' custom domain feature. A push to the repository triggers GitHub Actions (authenticating to AWS via OIDC, no long-lived credentials) that build and test the code and deploy the Lambda; Terraform (or Terraform Cloud) provisions and manages the AWS backend resources and the Cloudflare zone settings.
 
 ```mermaid
 flowchart LR
@@ -35,6 +35,8 @@ flowchart LR
     TFC --> Lambda
     TFC --> APIGW
     TFC --> DDB
+    TFC -- zone settings + WAF/rate-limit rules --> CFZone[Cloudflare Zone Config]
+    CFZone --> CFP
 ```
 
 ### Legacy architecture (portfolio reference)
@@ -100,6 +102,17 @@ This project provisions and uses the following AWS services (each is represented
 
 Infrastructure is managed with Terraform and deployments are automated with GitHub Actions. The CI role and IAM bindings are declared in the backend module so GitHub Actions can deploy safely.
 
+## Cloudflare configuration
+
+Terraform also manages the security settings for the domain on Cloudflare (`frontend_cloudflare` module):
+
+- **HTTPS/TLS enforcement** — Requires HTTPS, sets a minimum TLS version, and turns on automatic HTTPS rewrites so mixed-content links still load securely.
+- **Security level** — Controls how aggressively Cloudflare challenges suspicious visitors.
+- **Rate limiting** — Optional rules that block or throttle clients making too many requests in a given period.
+- **Firewall (WAF) rules** — Optional custom rules for blocking specific request patterns.
+
+Building and deploying the site itself, and pointing the domain at it, is handled by Cloudflare Pages directly (outside Terraform) — Terraform only covers the security settings layered on top.
+
 ### Legacy AWS services (no longer deployed)
 
 The following services were used for frontend hosting before the migration to Cloudflare Pages. Their Terraform definitions still exist in `terraform/legacy/frontend`, but the actual resources are no longer deployed on AWS and the module is excluded from the root Terraform config — it is kept for portfolio reference only.
@@ -113,7 +126,7 @@ The following services were used for frontend hosting before the migration to Cl
 
 ## Other tools
 
-- **Terraform** — Used to define and provision cloud infrastructure.
+- **Terraform** — Used to define and provision cloud infrastructure, via both the AWS and Cloudflare providers.
 - **Terraform Cloud (workspaces)** — This project is configured to use a Terraform Cloud workspace for state and runs (see `terraform/main.tf`).
 - **GitHub Actions** — CI/CD platform used to lint, test and deploy the Lambda.
 - **cargo-lambda** — Utility for building and deploying Rust Lambda functions.
@@ -130,7 +143,7 @@ The Lambda reads the DynamoDB table name from an environment variable set in Ter
 - **AWS Lambda (ARM64, `provided.al2023`):** Runs the backend as serverless functions, which helps keep cost low at small traffic levels while scaling automatically.
 - **API Gateway HTTP API:** Public entry point that securely forwards web requests to Lambda.
 - **DynamoDB:** Managed NoSQL data store for the visitor counter, chosen for simplicity and low operational overhead.
-- **Terraform:** Infrastructure as code tooling used to provision backend AWS resources consistently. The `frontend` module still exists in the repo but its resources (S3, CloudFront, Route53, ACM) are no longer deployed — see [Legacy AWS services](#legacy-aws-services-no-longer-deployed).
+- **Terraform:** Infrastructure as code tooling used to provision backend AWS resources and Cloudflare zone config consistently. The legacy `terraform/legacy/frontend` module still exists in the repo but its AWS resources (S3, CloudFront, Route53, ACM) are no longer deployed — see [Legacy AWS services](#legacy-aws-services-no-longer-deployed).
 - **GitHub Actions:** CI/CD pipeline that checks code quality and deploys changes on pushes to `master`.
 
 ## Prerequisites
@@ -139,6 +152,7 @@ The Lambda reads the DynamoDB table name from an environment variable set in Ter
 - [Cargo Lambda](https://www.cargo-lambda.info/) for Lambda build/deploy
 - [AWS CLI](https://aws.amazon.com/cli/) configured with appropriate permissions
 - [Terraform](https://www.terraform.io/) for infrastructure provisioning
+- A [Cloudflare](https://www.cloudflare.com/) API token (scoped: Zone Settings Edit, Firewall Services Edit) and the target zone ID, for the `frontend_cloudflare` module
 - [MSYS2](https://www.msys2.org/) on Windows for ARM64 cross-compilation support (ensure MSYS2 `bin` is in `PATH`)
 
 ## Project structure
@@ -158,9 +172,11 @@ The Lambda reads the DynamoDB table name from an environment variable set in Ter
 │   ├── main.tf
 │   ├── variables.tf
 │   ├── outputs.tf
-│   └── modules/
-│       ├── backend/
-│       └── frontend/          # legacy, no longer deployed (see README)
+│   ├── modules/
+│   │   ├── backend/
+│   │   └── frontend-cloudflare/   # Cloudflare zone settings, rate-limit + WAF rules
+│   └── legacy/
+│       └── frontend/              # legacy AWS module, no longer deployed (see README)
 └── .github/workflows/
 	├── ci-and-deploy.yml
 	└── security-scan.yml
