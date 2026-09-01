@@ -9,8 +9,7 @@ const TEST_ITEM_ID: &str = "test_item";
 
 // Integration test for visitor update using a test table and values,
 #[tokio::test]
-#[allow(clippy::result_large_err)]
-async fn test_update_visitors() -> Result<(), Error> {
+async fn test_update_visitors() -> Result<(), Box<Error>> {
     // Initialise AWS Config
     let config = aws_config::defaults(BehaviorVersion::latest())
         .region(Region::new(REGION))
@@ -26,7 +25,8 @@ async fn test_update_visitors() -> Result<(), Error> {
         .item("ID", AttributeValue::S(TEST_ITEM_ID.to_string()))
         .item("visitors", AttributeValue::N("0".to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     // Take the visitors from the table, then update the visitor item and take the new visitor value
     // returned directly from the update call itself.
@@ -50,13 +50,18 @@ async fn test_update_visitors() -> Result<(), Error> {
 }
 
 // Get the visitors from the table, ensuring that it is not empty and is a number
-async fn get_test_visitors(client: &Client, table: &str, item_id: &str) -> Result<i32, Error> {
+async fn get_test_visitors(
+    client: &Client,
+    table: &str,
+    item_id: &str,
+) -> Result<i32, Box<Error>> {
     let response = client
         .get_item()
         .table_name(table)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
 
     let visitors = response
         .item
@@ -70,12 +75,13 @@ async fn get_test_visitors(client: &Client, table: &str, item_id: &str) -> Resul
 }
 
 // Utility function for cleaning up the test table
-async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Error> {
+async fn cleanup_item(client: &Client, table: &str, item_id: &str) -> Result<(), Box<Error>> {
     client
         .delete_item()
         .table_name(table)
         .key("ID", AttributeValue::S(item_id.to_string()))
         .send()
-        .await?;
+        .await
+        .map_err(|e| Box::new(Error::from(e)))?;
     Ok(())
 }
